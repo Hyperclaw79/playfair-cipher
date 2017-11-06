@@ -1,135 +1,130 @@
+def generate_cipher(key):
+   key = ''.join(key.split(' ')) #remove spaces from given key and PF cipher is only for letters. 
+   mat=[]
+   for c in key.upper():
+      if c not in mat:
+         mat.append(c)
+   alphabet="ABCDEFGHIKLMNOPQRSTUVWXYZ"
+   pad = [c for c in alphabet if c not in mat] #List comprehension is more pythonic
+   mat = mat + pad
+   mat_2D = [mat[i*5:(i+1)*5] for i in range(5)] #condensed into one line
+   return mat_2D
 
-def matrix(key):
-	matrix=[]
-	for e in key.upper():
-		if e not in matrix:
-			matrix.append(e)
-	alphabet="ABCDEFGHIKLMNOPQRSTUVWXYZ"
-	
-	for e in alphabet:
-		if e not in matrix:
-			matrix.append(e)	
-	
-	#initialize a new list. Is there any elegant way to do that?
-	matrix_group=[]
-	for e in range(5):
-		matrix_group.append('')
-
-	#Break it into 5*5
-	matrix_group[0]=matrix[0:5]
-	matrix_group[1]=matrix[5:10]
-	matrix_group[2]=matrix[10:15]
-	matrix_group[3]=matrix[15:20]
-	matrix_group[4]=matrix[20:25]
-	return matrix_group
-
-def message_to_digraphs(message_original):
-	#Change it to Array. Because I want used insert() method
-	message=[]
-	for e in message_original:
-		message.append(e)
-
-	#Delet space
-	for unused in range(len(message)):
-		if " " in message:
-			message.remove(" ")
-
-	#If both letters are the same, add an "X" after the first letter.
-	i=0
-	for e in range(len(message)/2):
-		if message[i]==message[i+1]:
-			message.insert(i+1,'X')
-		i=i+2
-
-	#If it is odd digit, add an "X" at the end
-	if len(message)%2==1:
-		message.append("X")
-	#Grouping
-	i=0
-	new=[]
-	for x in xrange(1,len(message)/2+1):
-		new.append(message[i:i+2])
-		i=i+2
-	return new
+def prettify(table):      #For a more appealing display.
+    res1 = '[{}]\n'.format(' '.join(table[0]))
+    res2 = ''
+    for i in range(1,len(table)-1,1):
+        res2 = res2 + '|{}|\n'.format(' '.join(table[i]))
+    res3 = '[{}]\n'.format(' '.join(table[len(table)-1]))
+    res = res1 + res2 + res3
+    return res
 
 def find_position(key_matrix,letter):
-	x=y=0
-	for i in range(5):
-		for j in range(5):
-			if key_matrix[i][j]==letter:
-				x=i
-				y=j
+   x=y=0
+   for i in range(5):
+      for j in range(5):
+         if key_matrix[i][j]==letter:
+            x=i
+            y=j
 
-	return x,y
+   return x,y
+
+################################################################################
+
+def mes2pairs(message):
+   message = ''.join(message.split(' ')).upper()
+   if len(message)%2 == 1:
+      message = message + 'X'
+   pair = [list(message[i:i + 2]) for i in range(0, len(message), 2)]
+   pair2 = [[l[0],'X'] if l[0] == l[1] else [l[0],l[1]] for l in pair]
+   pairs = [''.join(l) for l in pair2]
+   pairs = ' '.join(pairs)
+   print("\nSplitting your message into the following pairs:\n{}".format(pairs))
+   return pair2
 
 def encrypt(message):
-	message=message_to_digraphs(message)
-	key_matrix=matrix(key)
-	cipher=[]
-	for e in message:
-		p1,q1=find_position(key_matrix,e[0])
-		p2,q2=find_position(key_matrix,e[1])
-		if p1==p2:
-			if q1==4:
-				q1=-1
-			if q2==4:
-				q2=-1
-			cipher.append(key_matrix[p1][q1+1])
-			cipher.append(key_matrix[p1][q2+1])		
-		elif q1==q2:
-			if p1==4:
-				p1=-1;
-			if p2==4:
-				p2=-1;
-			cipher.append(key_matrix[p1+1][q1])
-			cipher.append(key_matrix[p2+1][q2])
-		else:
-			cipher.append(key_matrix[p1][q2])
-			cipher.append(key_matrix[p2][q1])
-	return cipher
+   message = mes2pairs(message)
+   key_matrix = generate_cipher(key)
+   cipher=[]
+   for e in message:
+      p1,q1=find_position(key_matrix,e[0])
+      p2,q2=find_position(key_matrix,e[1])
+      if p1==p2:
+         if q1==4:
+            q1=-1
+         if q2==4:
+            q2=-1
+         cipher.append(key_matrix[p1][q1+1])
+         cipher.append(key_matrix[p1][q2+1])    
+      elif q1==q2:
+         if p1==4:
+            p1=-1;
+         if p2==4:
+            p2=-1;
+         cipher.append(key_matrix[p1+1][q1])
+         cipher.append(key_matrix[p2+1][q2])
+      else:
+         cipher.append(key_matrix[p1][q2])
+         cipher.append(key_matrix[p2][q1])
+   return ''.join(cipher)
 
-def cipher_to_digraphs(cipher):
-	i=0
-	new=[]
-	for x in range(len(cipher)/2):
-		new.append(cipher[i:i+2])
-		i=i+2
-	return new
+##########################################################################
 
+def cip2pairs(cipher):
+   pair = [list(cipher[i:i + 2]) for i in range(0, len(cipher), 2)]
+   pairs = [cipher[i:i + 2] for i in range(0, len(cipher), 2)]
+   pairs = ' '.join(pairs)
+   print("\nSplitting your cipher into the following pairs:\n{}".format(pairs))
+   return pair   
+   
+def decrypt(cipher): 
+   cipher=cip2pairs(cipher)
+   key_matrix=generate_cipher(key)
+   plaintext=[]
+   for e in cipher:
+      p1,q1=find_position(key_matrix,e[0])
+      p2,q2=find_position(key_matrix,e[1])
+      if p1==p2:
+         if q1==4:
+            q1=-1
+         if q2==4:
+            q2=-1
+         plaintext.append(key_matrix[p1][q1-1])
+         plaintext.append(key_matrix[p1][q2-1])    
+      elif q1==q2:
+         if p1==4:
+            p1=-1;
+         if p2==4:
+            p2=-1;
+         plaintext.append(key_matrix[p1-1][q1])
+         plaintext.append(key_matrix[p2-1][q2])
+      else:
+         plaintext.append(key_matrix[p1][q2])
+         plaintext.append(key_matrix[p2][q1])
 
-def decrypt(cipher):	
-	cipher=cipher_to_digraphs(cipher)
-	key_matrix=matrix(key)
-	plaintext=[]
-	for e in cipher:
-		p1,q1=find_position(key_matrix,e[0])
-		p2,q2=find_position(key_matrix,e[1])
-		if p1==p2:
-			if q1==4:
-				q1=-1
-			if q2==4:
-				q2=-1
-			plaintext.append(key_matrix[p1][q1-1])
-			plaintext.append(key_matrix[p1][q2-1])		
-		elif q1==q2:
-			if p1==4:
-				p1=-1;
-			if p2==4:
-				p2=-1;
-			plaintext.append(key_matrix[p1-1][q1])
-			plaintext.append(key_matrix[p2-1][q2])
-		else:
-			plaintext.append(key_matrix[p1][q2])
-			plaintext.append(key_matrix[p2][q1])
+   count = 0
+   pt = []
+   for c in plaintext:
+      if c == 'X':
+         count = count + 1
+   if count<2 and count>0:          
+      plaintext.remove('X')
+   elif count == 0:
+      pass
+   else:                    #In case there were repeated characters
+      for i in range(len(plaintext)):
+          if plaintext[i]=='X':
+              pt.append(plaintext[i-1])
+          else:
+              pt.append(plaintext[i])
+   output = ''
+   if len(pt)!=0:
+      output=''.join(pt)
+   else:
+      output=''.join(plaintext)
+   return output.lower()
 
-	for unused in range(len(plaintext)):
-		if "X" in plaintext:
-			plaintext.remove("X")
-	
-	output=""
-	for e in plaintext:
-		output+=e
-	return output.lower()
+###########################################################
 
 #key="cipher"
 #message="effecttreecorrectapple"
@@ -140,26 +135,20 @@ def decrypt(cipher):
 #>>BMODZBXDNABEKUDMUIXMMOUVIF
 
 
-print "Playfair Cipher"
-order=input("Choose :\n1,Encrypting \n2,Decrypting\n")
-if order==1:
-	key=raw_input("Please input the key : ")
-	message=raw_input("Please input the message : ")
-	print "Encrypting: \n"+"Message: "+message
-	print "Break the message into digraphs: "
-	print message_to_digraphs(message)
-	print "Matrix: "
-	print matrix(key) 
-	print "Cipher: " 
-	print encrypt(message)
-elif order==2:
-	key=raw_input("Please input the key : ")
-	cipher=raw_input("Please input the cipher text: ")
-	#cipher="ILSYQFBWBMLIAFFQ"
-	print "\nDecrypting: \n"+"Cipher: "+cipher
-	print "Plaintext:"
-	print decrypt(cipher)
+print("Welcome to Playfair Cipher.\n")
+key=input("Please input the key:\n")
+print("\nThe cipher matrix based on your key:\n{}".format(prettify(generate_cipher(key)))) 
+order = '3'
+while(int(order)>2):
+   order = input("What would you like to perform?\n1.Encryption\n2.Decryption\n")
+   if int(order)<= 2 and int(order)>= 1:
+       break
+if int(order) == 1:
+   message = input("\nPlease input the message:\n")
+   print("\nEncrypting the message:\n{}".format(message))
+   print("\nHere is the encrypted text:\n{}".format(encrypt(message)))
 else:
-	print "Error"
-
-
+   cipher = input("\nPlease input the cipher text:\n")
+   print("\nDecrypting the cipher:\n{}".format(cipher))
+   print("\nHere is the decrypted text:\n{}".format(decrypt(cipher)))
+print("\nThank you for using the Playfair Ciphering Script.")
